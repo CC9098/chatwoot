@@ -4,6 +4,7 @@ class Webhooks::WhatsappEventsJob < ApplicationJob
   def perform(params = {})
     params = params.deep_symbolize_keys
     channel = params[:channel_id].present? ? Channel::Whatsapp.find_by(id: params[:channel_id]) : find_channel_from_whatsapp_business_payload(params)
+    clear_stale_reauthorization!(channel, params)
 
     if channel_is_inactive?(channel)
       Rails.logger.warn("Inactive WhatsApp channel: #{channel&.phone_number || "unknown - #{params[:phone_number]}"}")
@@ -78,6 +79,16 @@ class Webhooks::WhatsappEventsJob < ApplicationJob
     false
   end
 
+  def clear_stale_reauthorization!(channel, params)
+    return if channel.blank?
+    return unless channel.reauthorization_required?
+    return unless params[:object] == 'whatsapp_business_account'
+    return unless channel_matches_verified_webhook?(channel, params)
+
+    channel.reauthorized!
+    Rails.logger.info("[WHATSAPP] Cleared stale reauthorization flag for channel #{channel.phone_number}")
+  end
+
   def find_channel_by_url_param(params)
     return unless params[:phone_number]
 
@@ -101,5 +112,15 @@ class Webhooks::WhatsappEventsJob < ApplicationJob
     return channel if channel && channel.provider_config['phone_number_id'].to_s == phone_number_id.to_s
 
     channel
+  end
+
+  def channel_matches_verified_webhook?(channel, params)
+    route_phone_number = params[:phone_number].to_s
+    payload_phone_number_id = params.dig(:entry, 0, :changes, 0, :value, :metadata, :phone_number_id).to_s
+
+    return false if route_phone_number.blank? || payload_phone_number_id.blank?
+
+    channel.phone_number == route_phone_number &&
+      channel.provider_config['phone_number_id'].to_s == payload_phone_number_id
   end
 end
