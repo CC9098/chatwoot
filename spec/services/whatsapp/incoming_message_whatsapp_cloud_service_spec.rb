@@ -57,6 +57,18 @@ describe Whatsapp::IncomingMessageWhatsappCloudService do
         expect(whatsapp_channel.inbox.messages.first.attachments.present?).to be false
         expect(whatsapp_channel.authorization_error_count).to eq(1)
       end
+
+      it 'creates conversations and messages for symbolized payloads from the job' do
+        stub_media_url_request
+        stub_sample_png_request
+
+        described_class.new(inbox: whatsapp_channel.inbox, params: params.deep_symbolize_keys).perform
+
+        expect_conversation_created
+        expect_contact_name
+        expect_message_content
+        expect_message_has_attachment
+      end
     end
 
     context 'when invalid attachment message params' do
