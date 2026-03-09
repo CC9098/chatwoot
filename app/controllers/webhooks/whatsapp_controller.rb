@@ -8,7 +8,8 @@ class Webhooks::WhatsappController < ActionController::API
       return
     end
 
-    Webhooks::WhatsappEventsJob.perform_later(params.to_unsafe_hash)
+    channel = Channel::Whatsapp.find_by(phone_number: params[:phone_number])
+    Webhooks::WhatsappEventsJob.perform_later(params.to_unsafe_hash.merge(channel_id: channel&.id))
     head :ok
   end
 
