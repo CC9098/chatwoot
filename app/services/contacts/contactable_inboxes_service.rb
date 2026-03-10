@@ -27,6 +27,12 @@ class Contacts::ContactableInboxesService
 
   def website_contactable_inbox(inbox)
     latest_contact_inbox = inbox.contact_inboxes.where(contact: @contact).last
+
+    if inbox.channel.continuity_via_email && @contact.email.present?
+      source_id = latest_contact_inbox&.source_id || SecureRandom.uuid
+      return { source_id: source_id, inbox: inbox }
+    end
+
     return unless latest_contact_inbox
     # FIXME : change this when multiple conversations comes in
     return if latest_contact_inbox.conversations.present?
