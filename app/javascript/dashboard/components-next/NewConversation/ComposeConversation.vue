@@ -59,6 +59,7 @@ const isCreatingContact = ref(false);
 const isFetchingInboxes = ref(false);
 const isSearching = ref(false);
 const showComposeNewConversation = ref(false);
+let inboxesRequestSequence = 0;
 
 const formState = reactive({
   message: '',
@@ -165,6 +166,44 @@ const handleTargetInbox = inbox => {
   resetContacts();
 };
 
+const updateSelectedContactInboxes = async currentContact => {
+  const requestSequence = ++inboxesRequestSequence;
+  const fallbackInboxes = processContactableInboxes(
+    currentContact.contactInboxes || []
+  );
+
+  if (!props.contactId) {
+    selectedContact.value = {
+      ...currentContact,
+      contactInboxes: mergeInboxDetails(fallbackInboxes, inboxesList.value),
+    };
+    return;
+  }
+
+  isFetchingInboxes.value = true;
+
+  try {
+    const contactableInboxes = await fetchContactableInboxes(currentContact.id);
+    if (requestSequence !== inboxesRequestSequence) return;
+
+    selectedContact.value = {
+      ...currentContact,
+      contactInboxes: mergeInboxDetails(contactableInboxes, inboxesList.value),
+    };
+  } catch {
+    if (requestSequence !== inboxesRequestSequence) return;
+
+    selectedContact.value = {
+      ...currentContact,
+      contactInboxes: mergeInboxDetails(fallbackInboxes, inboxesList.value),
+    };
+  } finally {
+    if (requestSequence === inboxesRequestSequence) {
+      isFetchingInboxes.value = false;
+    }
+  }
+};
+
 const clearSelectedContact = () => {
   selectedContact.value = null;
   targetInbox.value = null;
@@ -219,7 +258,7 @@ const toggle = () => {
 
 watch(
   activeContact,
-  (currentContact, previousContact) => {
+  async (currentContact, previousContact) => {
     if (currentContact && props.contactId) {
       // Reset on contact change
       if (currentContact?.id !== previousContact?.id) {
@@ -227,16 +266,7 @@ watch(
         clearFormState();
         formState.message = '';
       }
-
-      // First process the contactable inboxes to get the right structure
-      const processedInboxes = processContactableInboxes(
-        currentContact.contactInboxes || []
-      );
-      // Then Merge processedInboxes with the inboxes list
-      selectedContact.value = {
-        ...currentContact,
-        contactInboxes: mergeInboxDetails(processedInboxes, inboxesList.value),
-      };
+      await updateSelectedContactInboxes(currentContact);
     }
   },
   { immediate: true, deep: true }
