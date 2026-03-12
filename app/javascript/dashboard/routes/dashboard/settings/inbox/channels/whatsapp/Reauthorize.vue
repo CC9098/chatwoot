@@ -120,23 +120,7 @@ const handleLoginAndReauthorize = async () => {
     const authCode = await initWhatsAppEmbeddedSignup(
       whatsappConfigurationId.value
     );
-
-    // Check if this is a reauthorization scenario where we already have the business data
-    const existingConfig = props.inbox.provider_config;
-    if (
-      existingConfig &&
-      existingConfig.business_account_id &&
-      existingConfig.phone_number_id
-    ) {
-      await reauthorizeWhatsApp({
-        code: authCode,
-        business_id: existingConfig.business_account_id,
-        waba_id: existingConfig.business_account_id,
-        phone_number_id: existingConfig.phone_number_id,
-      });
-    } else {
-      startEmbeddedSignup(authCode);
-    }
+    startEmbeddedSignup(authCode);
   } catch (error) {
     if (error.message === 'Login cancelled') {
       useAlert(t('INBOX_MGMT.ADD.WHATSAPP.EMBEDDED_SIGNUP.CANCELLED'));
