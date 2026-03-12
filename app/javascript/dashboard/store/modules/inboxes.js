@@ -78,11 +78,6 @@ export const getters = {
         return false;
       }
 
-      // Filter out authentication templates
-      if (template.category === 'AUTHENTICATION') {
-        return false;
-      }
-
       // Filter out CSAT templates (customer_satisfaction_survey and its versions)
       if (
         template.name &&

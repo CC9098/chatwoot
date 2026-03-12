@@ -277,7 +277,7 @@ describe('#getters', () => {
       expect(result[0].name).toBe('regular_template');
     });
 
-    it('filters out authentication templates', () => {
+    it('keeps approved authentication templates', () => {
       const authenticationTemplates = [
         {
           name: 'auth_template',
@@ -306,8 +306,11 @@ describe('#getters', () => {
       };
 
       const result = getters.getFilteredWhatsAppTemplates(state)(1);
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('regular_template');
+      expect(result).toHaveLength(2);
+      expect(result.map(template => template.name)).toEqual([
+        'auth_template',
+        'regular_template',
+      ]);
     });
 
     it('returns valid templates from fixture data', () => {
