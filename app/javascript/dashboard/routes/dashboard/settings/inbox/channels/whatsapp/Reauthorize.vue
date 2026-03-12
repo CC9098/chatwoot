@@ -73,7 +73,10 @@ const handleEmbeddedSignupEvents = async (data, authCode) => {
   }
 
   // Handle different event types
-  if (data.event === 'FINISH') {
+  if (
+    data.event === 'FINISH' ||
+    data.event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING'
+  ) {
     const businessData = data.data;
 
     if (isValidBusinessData(businessData) && businessData.phone_number_id) {
