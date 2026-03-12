@@ -1,5 +1,5 @@
 class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::Conversations::BaseController
-  before_action :ensure_api_inbox, only: :update
+  before_action :ensure_api_inbox, only: :update, unless: :private_note_update_request?
 
   def index
     @messages = message_finder.perform
@@ -14,6 +14,8 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def update
+    return update_private_note if private_note_update_request?
+
     Messages::StatusUpdateService.new(message, permitted_params[:status], permitted_params[:external_error]).perform
     @message = message
   end
@@ -65,11 +67,26 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def permitted_params
-    params.permit(:id, :target_language, :status, :external_error)
+    params.permit(:id, :target_language, :status, :external_error, :content)
   end
 
   def already_translated_content_available?
     message.translations.present? && message.translations[permitted_params[:target_language]].present?
+  end
+
+  def private_note_update_request?
+    params.key?(:content)
+  end
+
+  def update_private_note
+    unless message.private?
+      return render json: { error: 'Only private notes can be updated' }, status: :unprocessable_entity
+    end
+
+    message.update!(content: permitted_params[:content])
+    @message = message
+  rescue StandardError => e
+    render_could_not_create_error(e.message)
   end
 
   # API inbox check

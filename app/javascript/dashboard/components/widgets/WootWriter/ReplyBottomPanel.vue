@@ -129,6 +129,7 @@ export default {
   },
   emits: [
     'replaceText',
+    'insertTodoItem',
     'toggleInsertArticle',
     'selectWhatsappTemplate',
     'selectContentTemplate',
@@ -283,6 +284,9 @@ export default {
     toggleInsertArticle() {
       this.$emit('toggleInsertArticle');
     },
+    insertTodoItem() {
+      this.$emit('insertTodoItem');
+    },
   },
 };
 </script>
@@ -360,6 +364,15 @@ export default {
         sm
         :aria-pressed="quotedReplyEnabled"
         @click="$emit('toggleQuotedReply')"
+      />
+      <NextButton
+        v-if="isOnPrivateNote && !isEditorDisabled"
+        v-tooltip.top-end="$t('CONVERSATION.REPLYBOX.TIP_TODO_ICON')"
+        icon="i-lucide-circle-check-big"
+        slate
+        faded
+        sm
+        @click="insertTodoItem"
       />
       <NextButton
         v-if="enableWhatsAppTemplates"

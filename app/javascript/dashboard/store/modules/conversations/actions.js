@@ -335,6 +335,16 @@ const actions = {
     handleVoiceCallUpdated(commit, message, rootGetters?.getCurrentUserID);
   },
 
+  async updatePrivateNote({ commit }, { conversationId, messageId, content }) {
+    const { data } = await MessageApi.updatePrivateNote(
+      conversationId,
+      messageId,
+      content
+    );
+    commit(types.ADD_MESSAGE, data);
+    return data;
+  },
+
   deleteMessage: async function deleteLabels(
     { commit },
     { conversationId, messageId }

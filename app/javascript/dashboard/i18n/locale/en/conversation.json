@@ -189,7 +189,7 @@
       "ENABLE_SIGN_TOOLTIP": "Enable signature",
       "DISABLE_SIGN_TOOLTIP": "Disable signature",
       "MSG_INPUT": "Shift + enter for new line. Start with '/' to select a Canned Response.",
-      "PRIVATE_MSG_INPUT": "Shift + enter for new line. This will be visible only to Agents",
+      "PRIVATE_MSG_INPUT": "Shift + enter for new line. Visible only to agents. Use - [ ] to create a shared todo list.",
       "MESSAGING_RESTRICTED": "You cannot reply to this conversation",
       "MESSAGING_RESTRICTED_WHATSAPP": "You can only reply using a template message due to 24-hour message window restriction",
       "MESSAGING_RESTRICTED_API": "You can only reply using a template message due to message window restriction",
@@ -209,6 +209,7 @@
       "TIP_EMOJI_ICON": "Show emoji selector",
       "TIP_ATTACH_ICON": "Attach files",
       "TIP_AUDIORECORDER_ICON": "Record audio",
+      "TIP_TODO_ICON": "Insert a todo item",
       "TIP_AUDIORECORDER_PERMISSION": "Allow access to audio",
       "TIP_AUDIORECORDER_ERROR": "Could not open the audio",
       "DRAG_DROP": "Drag and drop here to attach",
@@ -246,6 +247,13 @@
       }
     },
     "VISIBLE_TO_AGENTS": "Private Note: Only visible to you and your team",
+    "PRIVATE_NOTES": {
+      "TODO": {
+        "TITLE": "Shared todo list",
+        "PROGRESS": "{done}/{total} done",
+        "UPDATE_ERROR": "Couldn't update this todo item. Please try again."
+      }
+    },
     "CHANGE_STATUS": "Conversation status changed",
     "CHANGE_STATUS_FAILED": "Conversation status change failed",
     "CHANGE_AGENT": "Conversation Assignee changed",

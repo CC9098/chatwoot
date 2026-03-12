@@ -58,6 +58,7 @@ import { isFileTypeAllowedForChannel } from 'shared/helpers/FileHelper';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
 import { LocalStorage } from 'shared/helpers/localStorage';
 import { emitter } from 'shared/helpers/mitt';
+import { PRIVATE_NOTE_TODO_TEMPLATE } from 'dashboard/helper/privateNoteTodoHelper';
 const EmojiInput = defineAsyncComponent(
   () => import('shared/components/emoji/EmojiInput.vue')
 );
@@ -950,6 +951,13 @@ export default {
       this.updateEditorSelectionWith = content;
       this.onFocus();
     },
+    insertTodoItem() {
+      emitter.emit(
+        BUS_EVENTS.INSERT_INTO_RICH_EDITOR,
+        PRIVATE_NOTE_TODO_TEMPLATE
+      );
+      this.onFocus();
+    },
     executeCopilotAction(action, data) {
       this.copilot.execute(action, data);
     },
@@ -1416,6 +1424,7 @@ export default {
         :new-conversation-modal-active="newConversationModalActive"
         @select-whatsapp-template="openWhatsappTemplateModal"
         @select-content-template="openContentTemplateModal"
+        @insert-todo-item="insertTodoItem"
         @replace-text="replaceText"
         @toggle-insert-article="toggleInsertArticle"
         @toggle-quoted-reply="toggleQuotedReply"

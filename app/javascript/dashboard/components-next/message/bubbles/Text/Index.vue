@@ -2,13 +2,15 @@
 import { computed, ref } from 'vue';
 import BaseBubble from 'next/message/bubbles/Base.vue';
 import FormattedContent from './FormattedContent.vue';
+import PrivateNoteChecklist from './PrivateNoteChecklist.vue';
 import AttachmentChips from 'next/message/chips/AttachmentChips.vue';
 import TranslationToggle from 'dashboard/components-next/message/TranslationToggle.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
+import { hasPrivateNoteTodos } from 'dashboard/helper/privateNoteTodoHelper';
 
-const { content, attachments, contentAttributes, messageType } =
+const { content, attachments, contentAttributes, messageType, isPrivate } =
   useMessageContext();
 
 const { hasTranslations, translationContent } =
@@ -36,6 +38,14 @@ const isEmpty = computed(() => {
   return !content.value && !attachments.value?.length;
 });
 
+const shouldRenderPrivateNoteChecklist = computed(() => {
+  return (
+    isPrivate.value &&
+    !hasTranslations.value &&
+    hasPrivateNoteTodos(content.value)
+  );
+});
+
 const handleSeeOriginal = () => {
   renderOriginal.value = !renderOriginal.value;
 };
@@ -47,7 +57,11 @@ const handleSeeOriginal = () => {
       <span v-if="isEmpty" class="text-n-slate-11">
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>
-      <FormattedContent v-if="renderContent" :content="renderContent" />
+      <PrivateNoteChecklist
+        v-if="shouldRenderPrivateNoteChecklist"
+        :content="content"
+      />
+      <FormattedContent v-else-if="renderContent" :content="renderContent" />
       <TranslationToggle
         v-if="hasTranslations"
         class="-mt-3"
