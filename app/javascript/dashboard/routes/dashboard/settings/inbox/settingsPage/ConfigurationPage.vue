@@ -47,6 +47,9 @@ export default {
     isEmbeddedSignupWhatsApp() {
       return this.inbox.provider_config?.source === 'embedded_signup';
     },
+    canReconfigureWhatsAppCloudInbox() {
+      return this.isAWhatsAppCloudChannel && !!this.whatsappAppId;
+    },
     whatsappAppId() {
       return window.chatwootConfig?.whatsappAppId;
     },
@@ -326,10 +329,8 @@ export default {
   </div>
   <div v-else-if="isAWhatsAppChannel && !isATwilioChannel">
     <div v-if="inbox.provider_config">
-      <!-- Embedded Signup Section -->
-      <template v-if="isEmbeddedSignupWhatsApp">
+      <template v-if="canReconfigureWhatsAppCloudInbox">
         <SettingsFieldSection
-          v-if="whatsappAppId"
           :label="
             $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_EMBEDDED_SIGNUP_TITLE')
           "
@@ -403,7 +404,7 @@ export default {
       </SettingsFieldSection>
     </div>
     <WhatsappReauthorize
-      v-if="isEmbeddedSignupWhatsApp"
+      v-if="isAWhatsAppCloudChannel"
       ref="whatsappReauth"
       :inbox="inbox"
       class="hidden"
