@@ -24,11 +24,16 @@ class Whatsapp::Providers::Whatsapp360DialogService < Whatsapp::Providers::BaseS
     process_response(response, message)
   end
 
-  def sync_templates
+  def sync_templates(raise_errors: false)
     # ensuring that channels with wrong provider config wouldn't keep trying to sync templates
     whatsapp_channel.mark_message_templates_updated
     response = HTTParty.get("#{api_base_path}/configs/templates", headers: api_headers)
-    whatsapp_channel.update(message_templates: response['waba_templates'], message_templates_last_updated: Time.now.utc) if response.success?
+    unless response.success?
+      handle_template_sync_failure(response, raise_errors: raise_errors)
+      return false
+    end
+
+    whatsapp_channel.update(message_templates: response['waba_templates'] || [], message_templates_last_updated: Time.current)
   end
 
   def validate_provider_config?
@@ -95,7 +100,15 @@ class Whatsapp::Providers::Whatsapp360DialogService < Whatsapp::Providers::BaseS
 
   def error_message(response)
     # {"meta": {"success": false, "http_code": 400, "developer_message": "errro-message", "360dialog_trace_id": "someid"}}
-    response.parsed_response.dig('meta', 'developer_message')
+    response.parsed_response&.dig('meta', 'developer_message')
+  end
+
+  def handle_template_sync_failure(response, raise_errors: false)
+    error = error_message(response).presence || "HTTP #{response.code}"
+    message = "Failed to sync WhatsApp templates: #{error}"
+
+    Rails.logger.error "[WHATSAPP TEMPLATE SYNC] #{message}"
+    raise CustomExceptions::Whatsapp::TemplateSyncError.new(message) if raise_errors
   end
 
   def template_body_parameters(template_info)

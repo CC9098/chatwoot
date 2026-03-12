@@ -235,20 +235,28 @@ describe('#actions', () => {
   describe('#syncTemplates', () => {
     it('sends correct API call when sync is successful', async () => {
       axios.post.mockResolvedValue({
-        data: { message: 'Template sync initiated successfully' },
+        data: { message: 'Template sync completed successfully' },
       });
+      axios.get.mockResolvedValue({ data: inboxList[0] });
 
       await actions.syncTemplates({ commit }, 123);
 
       expect(axios.post).toHaveBeenCalledWith(
         '/api/v1/inboxes/123/sync_templates'
       );
+      expect(axios.get).toHaveBeenCalledWith('/api/v1/inboxes/123');
+      expect(commit).toHaveBeenCalledWith(
+        types.default.SET_INBOXES_ITEM,
+        inboxList[0]
+      );
     });
 
     it('throws error when API call fails', async () => {
       const errorMessage =
         'Template sync is only available for WhatsApp channels';
-      axios.post.mockRejectedValue(new Error(errorMessage));
+      axios.post.mockRejectedValue({
+        response: { data: { error: errorMessage } },
+      });
 
       await expect(actions.syncTemplates({ commit }, 123)).rejects.toThrow(
         errorMessage

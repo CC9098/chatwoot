@@ -18,6 +18,14 @@ describe Whatsapp::Providers::Whatsapp360DialogService do
         subject.sync_templates
         expect(whatsapp_channel.reload.message_templates_last_updated).not_to eq(timstamp)
       end
+
+      it 'raises an error when manual sync fails' do
+        stub_request(:get, 'https://waba.360dialog.io/v1/configs/templates')
+          .to_return(status: 401, body: { meta: { developer_message: 'Invalid API key' } }.to_json, headers: response_headers)
+
+        expect { subject.sync_templates(raise_errors: true) }
+          .to raise_error(CustomExceptions::Whatsapp::TemplateSyncError, 'Failed to sync WhatsApp templates: Invalid API key')
+      end
     end
   end
 

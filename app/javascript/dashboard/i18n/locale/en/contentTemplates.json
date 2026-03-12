@@ -18,7 +18,7 @@
       "MEDIA_CONTENT_FALLBACK": "media content",
       "NO_TEMPLATES_AVAILABLE": "No Twilio templates available. Click refresh to sync templates from Twilio.",
       "REFRESH_BUTTON": "Refresh templates",
-      "REFRESH_SUCCESS": "Templates refresh initiated. It may take a couple of minutes to update.",
+      "REFRESH_SUCCESS": "Templates refreshed successfully.",
       "REFRESH_ERROR": "Failed to refresh templates. Please try again.",
       "LABELS": {
         "LANGUAGE": "Language",

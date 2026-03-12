@@ -227,6 +227,14 @@ describe Whatsapp::Providers::WhatsappCloudService do
         subject.sync_templates
         expect(whatsapp_channel.reload.message_templates_last_updated).not_to eq(timstamp)
       end
+
+      it 'raises an error when manual sync fails' do
+        stub_request(:get, 'https://graph.facebook.com/v14.0/123456789/message_templates?access_token=test_key')
+          .to_return(status: 401, body: { error: { message: 'Invalid OAuth access token.' } }.to_json, headers: response_headers)
+
+        expect { subject.sync_templates(raise_errors: true) }
+          .to raise_error(CustomExceptions::Whatsapp::TemplateSyncError, 'Failed to sync WhatsApp templates: Invalid OAuth access token.')
+      end
     end
   end
 

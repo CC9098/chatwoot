@@ -1030,8 +1030,8 @@ RSpec.describe 'Inboxes API', type: :request do
 
     context 'when it is an authenticated administrator' do
       context 'with WhatsApp inbox' do
-        it 'successfully initiates template sync' do
-          expect(Channels::Whatsapp::TemplatesSyncJob).to receive(:perform_later).with(whatsapp_channel)
+        it 'successfully syncs templates' do
+          expect_any_instance_of(Channel::Whatsapp).to receive(:sync_templates).with(raise_errors: true).and_return(true)
 
           post "/api/v1/accounts/#{account.id}/inboxes/#{whatsapp_inbox.id}/sync_templates",
                headers: admin.create_new_auth_token,
@@ -1039,11 +1039,11 @@ RSpec.describe 'Inboxes API', type: :request do
 
           expect(response).to have_http_status(:success)
           json_response = response.parsed_body
-          expect(json_response['message']).to eq('Template sync initiated successfully')
+          expect(json_response['message']).to eq('Template sync completed successfully')
         end
 
-        it 'handles job errors gracefully' do
-          allow(Channels::Whatsapp::TemplatesSyncJob).to receive(:perform_later).and_raise(StandardError, 'Job failed')
+        it 'handles sync errors gracefully' do
+          allow_any_instance_of(Channel::Whatsapp).to receive(:sync_templates).with(raise_errors: true).and_raise(StandardError, 'Sync failed')
 
           post "/api/v1/accounts/#{account.id}/inboxes/#{whatsapp_inbox.id}/sync_templates",
                headers: admin.create_new_auth_token,
@@ -1051,7 +1051,7 @@ RSpec.describe 'Inboxes API', type: :request do
 
           expect(response).to have_http_status(:internal_server_error)
           json_response = response.parsed_body
-          expect(json_response['error']).to eq('Job failed')
+          expect(json_response['error']).to eq('Sync failed')
         end
       end
 

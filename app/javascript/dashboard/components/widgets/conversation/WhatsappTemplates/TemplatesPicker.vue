@@ -62,7 +62,7 @@ const refreshTemplates = async () => {
     await store.dispatch('inboxes/syncTemplates', props.inboxId);
     useAlert(t('WHATSAPP_TEMPLATES.PICKER.REFRESH_SUCCESS'));
   } catch (error) {
-    useAlert(t('WHATSAPP_TEMPLATES.PICKER.REFRESH_ERROR'));
+    useAlert(error.message || t('WHATSAPP_TEMPLATES.PICKER.REFRESH_ERROR'));
   } finally {
     isRefreshing.value = false;
   }
@@ -112,8 +112,9 @@ const refreshTemplates = async () => {
               <span
                 class="inline-block px-2 py-1 text-xs leading-none rounded-lg cursor-default bg-n-slate-3 text-n-slate-12"
               >
-                {{ t('WHATSAPP_TEMPLATES.PICKER.LABELS.LANGUAGE') }}:
-                {{ template.language }}
+                {{
+                  `${t('WHATSAPP_TEMPLATES.PICKER.LABELS.LANGUAGE')}: ${template.language}`
+                }}
               </span>
             </div>
             <!-- Header -->

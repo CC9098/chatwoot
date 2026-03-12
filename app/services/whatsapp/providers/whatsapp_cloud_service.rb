@@ -31,22 +31,34 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
     process_response(response, message)
   end
 
-  def sync_templates
+  def sync_templates(raise_errors: false)
     # ensuring that channels with wrong provider config wouldn't keep trying to sync templates
     whatsapp_channel.mark_message_templates_updated
-    templates = fetch_whatsapp_templates("#{business_account_path}/message_templates?access_token=#{whatsapp_channel.provider_config['api_key']}")
-    whatsapp_channel.update(message_templates: templates, message_templates_last_updated: Time.now.utc) if templates.present?
+    templates = fetch_whatsapp_templates(
+      "#{business_account_path}/message_templates?access_token=#{whatsapp_channel.provider_config['api_key']}",
+      raise_errors: raise_errors
+    )
+    return false if templates.nil?
+
+    whatsapp_channel.update(message_templates: templates, message_templates_last_updated: Time.current)
   end
 
-  def fetch_whatsapp_templates(url)
+  def fetch_whatsapp_templates(url, raise_errors: false)
     response = HTTParty.get(url)
-    return [] unless response.success?
+    unless response.success?
+      handle_template_sync_failure(response, raise_errors: raise_errors)
+      return nil
+    end
 
     next_url = next_url(response)
+    templates = response['data'] || []
 
-    return response['data'] + fetch_whatsapp_templates(next_url) if next_url.present?
+    return templates if next_url.blank?
 
-    response['data']
+    next_templates = fetch_whatsapp_templates(next_url, raise_errors: raise_errors)
+    return nil if next_templates.nil?
+
+    templates + next_templates
   end
 
   def next_url(response)
@@ -140,6 +152,14 @@ class Whatsapp::Providers::WhatsappCloudService < Whatsapp::Providers::BaseServi
   def error_message(response)
     # https://developers.facebook.com/docs/whatsapp/cloud-api/support/error-codes/#sample-response
     response.parsed_response&.dig('error', 'message')
+  end
+
+  def handle_template_sync_failure(response, raise_errors: false)
+    error = error_message(response).presence || "HTTP #{response.code}"
+    message = "Failed to sync WhatsApp templates: #{error}"
+
+    Rails.logger.error "[WHATSAPP TEMPLATE SYNC] #{message}"
+    raise CustomExceptions::Whatsapp::TemplateSyncError.new(message) if raise_errors
   end
 
   def template_body_parameters(template_info)

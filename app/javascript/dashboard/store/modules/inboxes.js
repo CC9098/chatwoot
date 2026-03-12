@@ -345,11 +345,14 @@ export const actions = {
       throw new Error(error);
     }
   },
-  syncTemplates: async (_, inboxId) => {
+  syncTemplates: async ({ commit }, inboxId) => {
     try {
       await InboxesAPI.syncTemplates(inboxId);
+      const response = await InboxesAPI.show(inboxId);
+      commit(types.default.SET_INBOXES_ITEM, response.data);
+      return response.data;
     } catch (error) {
-      throw new Error(error);
+      return throwErrorMessage(error);
     }
   },
   createCSATTemplate: async (_, { inboxId, template }) => {

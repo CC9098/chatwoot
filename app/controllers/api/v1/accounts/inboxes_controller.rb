@@ -74,8 +74,9 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
     return render status: :unprocessable_entity, json: { error: 'Template sync is only available for WhatsApp channels' } unless whatsapp_channel?
 
     trigger_template_sync
-    render status: :ok, json: { message: 'Template sync initiated successfully' }
+    render status: :ok, json: { message: 'Template sync completed successfully' }
   rescue StandardError => e
+    Rails.logger.error "[INBOX TEMPLATE SYNC] Inbox #{@inbox&.id}: #{e.message}"
     render status: :internal_server_error, json: { error: e.message }
   end
 
@@ -207,10 +208,12 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController
 
   def trigger_template_sync
     if @inbox.whatsapp?
-      Channels::Whatsapp::TemplatesSyncJob.perform_later(@inbox.channel)
+      result = @inbox.channel.sync_templates(raise_errors: true)
     elsif @inbox.twilio? && @inbox.channel.whatsapp?
-      Channels::Twilio::TemplatesSyncJob.perform_later(@inbox.channel)
+      result = Twilio::TemplateSyncService.new(channel: @inbox.channel).call
     end
+
+    raise StandardError, 'Template sync failed' if result == false
   end
 end
 
