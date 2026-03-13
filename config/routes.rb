@@ -248,6 +248,7 @@ Rails.application.routes.draw do
               post :unread
             end
           end
+          resources :todos, only: [:index]
           resource :notification_settings, only: [:show, :update]
 
           resources :teams do

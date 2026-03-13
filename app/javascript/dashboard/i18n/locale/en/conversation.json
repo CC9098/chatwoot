@@ -254,6 +254,30 @@
         "UPDATE_ERROR": "Couldn't update this todo item. Please try again."
       }
     },
+    "TODOS": {
+      "TITLE": "Todos",
+      "SUBTITLE": "Shared private-note checklists across every conversation you can access.",
+      "REFRESH": "Refresh",
+      "SEARCH_PLACEHOLDER": "Search todos, contacts, assignees, or conversation IDs",
+      "SHOW_COMPLETED": "Show completed items",
+      "SHOW_COMPLETED_HINT": "Keep the list focused on follow-ups that still need action.",
+      "CONVERSATION_ID": "#{id}",
+      "ASSIGNEE_AND_INBOX": "{assignee} • {inbox}",
+      "UNASSIGNED": "Unassigned",
+      "UNKNOWN_AUTHOR": "Unknown author",
+      "LOAD_ERROR": "Couldn't load shared todos. Please try again.",
+      "SUMMARY": {
+        "OPEN_ITEMS": "Open items",
+        "DONE_ITEMS": "Done items",
+        "NOTES": "Notes"
+      },
+      "EMPTY": {
+        "TITLE": "No shared todos yet",
+        "MESSAGE": "Create a private note with - [ ] to turn follow-ups into a shared todo list.",
+        "FILTERED_TITLE": "No todos match these filters",
+        "FILTERED_MESSAGE": "Try a different keyword or turn on completed items."
+      }
+    },
     "CHANGE_STATUS": "Conversation status changed",
     "CHANGE_STATUS_FAILED": "Conversation status change failed",
     "CHANGE_AGENT": "Conversation Assignee changed",

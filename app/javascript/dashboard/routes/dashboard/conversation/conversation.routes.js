@@ -1,6 +1,7 @@
 /* eslint arrow-body-style: 0 */
 import { frontendURL } from '../../../helper/URLHelper';
 import ConversationView from './ConversationView.vue';
+import TodoView from './TodoView.vue';
 
 const CONVERSATION_PERMISSIONS = [
   'administrator',
@@ -197,6 +198,27 @@ export default {
       props: route => ({
         conversationId: route.params.conversationId,
         conversationType: 'participating',
+      }),
+    },
+    {
+      path: frontendURL('accounts/:accountId/todos'),
+      name: 'conversation_todos',
+      meta: {
+        permissions: CONVERSATION_PERMISSIONS,
+      },
+      component: TodoView,
+    },
+    {
+      path: frontendURL(
+        'accounts/:accountId/todos/conversations/:conversationId'
+      ),
+      name: 'conversation_through_todos',
+      meta: {
+        permissions: CONVERSATION_PERMISSIONS,
+      },
+      component: TodoView,
+      props: route => ({
+        conversationId: route.params.conversationId,
       }),
     },
   ],
