@@ -97,6 +97,93 @@ describe Whatsapp::SendOnWhatsappService do
         expect(message.reload.external_error).to eq('Template not found or invalid template name')
       end
 
+      it 'syncs templates and retries when the selected translation is missing from cache' do
+        refreshed_template = {
+          'name' => 'appointment_reminder',
+          'status' => 'approved',
+          'category' => 'UTILITY',
+          'language' => 'zh_HK',
+          'namespace' => 'new_namespace',
+          'components' => [{ 'type' => 'BODY', 'text' => 'Reminder {{1}}' }]
+        }
+        refreshed_template_params = {
+          name: 'appointment_reminder',
+          namespace: 'new_namespace',
+          language: 'zh_HK',
+          category: 'UTILITY',
+          processed_params: { 'body' => { '1' => 'tomorrow' } }
+        }
+        message = create(:message,
+                         additional_attributes: { template_params: refreshed_template_params },
+                         content: 'Reminder tomorrow',
+                         conversation: conversation,
+                         message_type: :outgoing,
+                         account: conversation.account)
+        service_channel = message.conversation.inbox.channel
+
+        allow(service_channel).to receive(:sync_templates) do
+          service_channel.update!(message_templates: service_channel.message_templates + [refreshed_template])
+        end
+
+        stub_request(:post, 'https://waba.360dialog.io/v1/messages')
+          .with(
+            headers: headers,
+            body: {
+              to: '123456789',
+              template: {
+                name: 'appointment_reminder',
+                namespace: 'new_namespace',
+                language: { 'policy': 'deterministic', 'code': 'zh_HK' },
+                components: [{ 'type': 'body', 'parameters': [{ 'type': 'text', 'text': 'tomorrow' }] }]
+              },
+              type: 'template'
+            }.to_json
+          ).to_return(status: 200, body: success_response, headers: { 'content-type' => 'application/json' })
+
+        described_class.new(message: message).perform
+
+        expect(service_channel).to have_received(:sync_templates)
+        expect(message.reload.source_id).to eq('123456789')
+      end
+
+      it 'marks the message failed with a clearer error when Meta rejects a stale template translation' do
+        message = create(:message, message_type: :outgoing, content: 'Your package has been shipped. It will be delivered in 3 business days.',
+                                   conversation: conversation, additional_attributes: { template_params: template_params },
+                                   account: conversation.account)
+        service_channel = message.conversation.inbox.channel
+
+        allow(service_channel).to receive(:sync_templates) do
+          service_channel.update!(
+            message_templates: service_channel.message_templates.reject do |template|
+              template['name'] == 'sample_shipping_confirmation' && template['language'] == 'en_US'
+            end
+          )
+        end
+
+        stub_request(:post, 'https://waba.360dialog.io/v1/messages')
+          .with(
+            headers: headers,
+            body: template_body.to_json
+          ).to_return(
+            status: 400,
+            body: {
+              meta: {
+                developer_message: '(#132001) Template name does not exist in the translation'
+              }
+            }.to_json,
+            headers: { 'content-type' => 'application/json' }
+          )
+
+        described_class.new(message: message).perform
+
+        expect(service_channel).to have_received(:sync_templates)
+        expect(message.reload.status).to eq('failed')
+        expect(message.reload.external_error).to eq(
+          'Template translation not found for this inbox. Refresh WhatsApp templates and choose an approved language.'
+        )
+        expect(a_request(:post, 'https://waba.360dialog.io/v1/messages')).to have_been_made.once
+      end
+
       it 'calls channel.send_template when after 24 hour limit' do
         message = create(:message, message_type: :outgoing, content: 'Your package has been shipped. It will be delivered in 3 business days.',
                                    conversation: conversation, additional_attributes: { template_params: template_params },
