@@ -26,6 +26,55 @@ RSpec.describe MessageTemplates::HookExecutionService do
 
         create(:message, conversation: conversation, message_type: :incoming)
       end
+
+      it 'opens the conversation instead of scheduling Captain for follow-up messages within 72 hours' do
+        create(
+          :message,
+          conversation: conversation,
+          message_type: :outgoing,
+          sender: assistant,
+          created_at: 2.hours.ago
+        )
+
+        expect(Captain::Conversation::ResponseBuilderJob).not_to receive(:perform_later)
+
+        create(:message, conversation: conversation, message_type: :incoming)
+
+        expect(conversation.reload.status).to eq('open')
+      end
+
+      it 'opens a newly created conversation instead of scheduling Captain when the same contact was active within 72 hours' do
+        previous_conversation = create(
+          :conversation,
+          inbox: inbox,
+          account: account,
+          contact: contact,
+          contact_inbox: conversation.contact_inbox,
+          status: :resolved
+        )
+        create(
+          :message,
+          conversation: previous_conversation,
+          message_type: :outgoing,
+          sender: assistant,
+          created_at: 2.hours.ago
+        )
+
+        new_conversation = create(
+          :conversation,
+          inbox: inbox,
+          account: account,
+          contact: contact,
+          contact_inbox: conversation.contact_inbox,
+          status: :pending
+        )
+
+        expect(Captain::Conversation::ResponseBuilderJob).not_to receive(:perform_later)
+
+        create(:message, conversation: new_conversation, message_type: :incoming)
+
+        expect(new_conversation.reload.status).to eq('open')
+      end
     end
 
     context 'when outside business hours' do
