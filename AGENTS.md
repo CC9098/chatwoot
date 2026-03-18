@@ -61,6 +61,12 @@
 - Example: `feat(auth): add user authentication`
 - Don't reference Claude in commit messages
 
+## Git Workflow
+
+- Default to the current branch. Do not create a new branch unless the user explicitly asks for one.
+- When the user asks to push changes, push the current working branch directly.
+- For this repository, `develop` is a valid working branch and should remain the default branch for day-to-day changes unless the user says otherwise.
+
 ## PR Description Format
 
 - Start with a short, user-facing paragraph describing the product change.
