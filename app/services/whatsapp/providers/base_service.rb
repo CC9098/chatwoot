@@ -9,6 +9,8 @@
 ######################################
 
 class Whatsapp::Providers::BaseService
+  WHATSAPP_LIST_BUTTON_LABEL = '請選擇項目'.freeze
+
   pattr_initialize [:whatsapp_channel!]
 
   def send_message(_phone_number, _message)
@@ -105,19 +107,6 @@ class Whatsapp::Providers::BaseService
   end
 
   def list_button_label
-    I18n.t('conversations.messages.whatsapp.list_button_label', locale: safe_account_locale)
-  end
-
-  def safe_account_locale
-    locale = whatsapp_channel.account&.locale.to_s
-    return I18n.locale if locale.blank?
-
-    available_locales = I18n.available_locales.map(&:to_s)
-    return locale if available_locales.include?(locale)
-
-    locale_without_variant = locale.split('_').first
-    return locale_without_variant if available_locales.include?(locale_without_variant)
-
-    I18n.locale
+    WHATSAPP_LIST_BUTTON_LABEL
   end
 end
