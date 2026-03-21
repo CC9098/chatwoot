@@ -199,7 +199,7 @@ zh_CN:
       instagram_shared_post_content: 'Shared post'
       deleted: 此消息已被删除
       whatsapp:
-        list_button_label: 'Choose an item'
+        list_button_label: '請選擇項目'
       delivery_status:
         error_code: '错误代码: %{error_code}'
     activity:
