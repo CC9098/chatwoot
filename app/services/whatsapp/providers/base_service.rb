@@ -100,7 +100,24 @@ class Whatsapp::Providers::BaseService
     rows = create_rows(message.content_attributes['items'])
     section1 = { 'rows' => rows }
     sections = [section1]
-    json_hash = { :button => I18n.t('conversations.messages.whatsapp.list_button_label'), 'sections' => sections }
+    json_hash = { :button => list_button_label, 'sections' => sections }
     create_payload('list', message.outgoing_content, JSON.generate(json_hash))
+  end
+
+  def list_button_label
+    I18n.t('conversations.messages.whatsapp.list_button_label', locale: safe_account_locale)
+  end
+
+  def safe_account_locale
+    locale = whatsapp_channel.account&.locale.to_s
+    return I18n.locale if locale.blank?
+
+    available_locales = I18n.available_locales.map(&:to_s)
+    return locale if available_locales.include?(locale)
+
+    locale_without_variant = locale.split('_').first
+    return locale_without_variant if available_locales.include?(locale_without_variant)
+
+    I18n.locale
   end
 end
