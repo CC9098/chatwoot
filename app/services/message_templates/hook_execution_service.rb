@@ -4,6 +4,7 @@ class MessageTemplates::HookExecutionService
   def perform
     return if conversation.last_incoming_message.blank?
     return if message.auto_reply_email?
+    return if inbox.auto_reply_disabled_for_contact?(contact)
 
     trigger_templates
   end

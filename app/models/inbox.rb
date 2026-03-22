@@ -46,12 +46,15 @@ class Inbox < ApplicationRecord
   include AccountCacheRevalidator
   include InboxAgentAvailability
 
+  AUTO_REPLY_DISABLED_PHONE_NUMBER_SEPARATOR = /[\n,;]+/
+
   # Not allowing characters:
   validates :name, presence: true
   validates :account_id, presence: true
   validates :timezone, inclusion: { in: TZInfo::Timezone.all_identifiers }
   validates :out_of_office_message, length: { maximum: Limits::OUT_OF_OFFICE_MESSAGE_MAX_LENGTH }
   validates :greeting_message, length: { maximum: Limits::GREETING_MESSAGE_MAX_LENGTH }
+  validates :auto_reply_disabled_contact_phone_numbers, length: { maximum: Limits::GREETING_MESSAGE_MAX_LENGTH }
   validate :ensure_valid_max_assignment_limit
 
   belongs_to :account
@@ -77,6 +80,7 @@ class Inbox < ApplicationRecord
 
   enum sender_name_type: { friendly: 0, professional: 1 }
 
+  before_validation :normalize_auto_reply_disabled_contact_phone_numbers
   after_destroy :delete_round_robin_agents
 
   after_create_commit :dispatch_create_event
@@ -199,11 +203,42 @@ class Inbox < ApplicationRecord
     members.ids
   end
 
+  def auto_reply_disabled_contact_phone_number_list
+    auto_reply_disabled_contact_phone_numbers.to_s.split("\n").filter_map(&:presence)
+  end
+
+  def auto_reply_disabled_for_contact?(contact)
+    return false unless (whatsapp? || twilio_whatsapp?) && contact&.phone_number.present?
+
+    auto_reply_disabled_contact_phone_number_list.include?(normalize_auto_reply_phone_number(contact.phone_number))
+  end
+
   def auto_assignment_v2_enabled?
     account.feature_enabled?('assignment_v2')
   end
 
   private
+
+  def normalize_auto_reply_disabled_contact_phone_numbers
+    normalized_phone_numbers = auto_reply_disabled_contact_phone_numbers.to_s
+      .split(AUTO_REPLY_DISABLED_PHONE_NUMBER_SEPARATOR)
+      .filter_map { |phone_number| normalize_auto_reply_phone_number(phone_number) }
+      .uniq
+
+    self.auto_reply_disabled_contact_phone_numbers = normalized_phone_numbers.join("\n").presence
+  end
+
+  def normalize_auto_reply_phone_number(phone_number)
+    digits_only = phone_number.to_s.gsub(/\D/, '')
+    return if digits_only.blank?
+
+    parsed_phone_number = TelephoneNumber.parse("+#{digits_only}")
+    return unless parsed_phone_number.valid?
+
+    parsed_phone_number.e164_number
+  rescue StandardError
+    nil
+  end
 
   def default_name_for_blank_name
     email? ? display_name_from_email : ''

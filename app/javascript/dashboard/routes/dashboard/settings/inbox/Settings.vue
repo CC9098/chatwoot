@@ -37,6 +37,7 @@ import { LocalStorage } from 'shared/helpers/localStorage';
 import Editor from 'dashboard/components-next/Editor/Editor.vue';
 import ColorPicker from 'dashboard/components-next/colorpicker/ColorPicker.vue';
 import SelectInput from 'dashboard/components-next/select/Select.vue';
+import TextArea from 'dashboard/components-next/textarea/TextArea.vue';
 import Widget from 'dashboard/modules/widget-preview/components/Widget.vue';
 
 export default {
@@ -67,6 +68,7 @@ export default {
     Avatar,
     ColorPicker,
     SelectInput,
+    TextArea,
     AccountHealth,
     Widget,
   },
@@ -93,6 +95,7 @@ export default {
       channelWelcomeTagline: '',
       selectedFeatureFlags: [],
       replyTime: '',
+      autoReplyDisabledContactPhoneNumbers: '',
       selectedTabIndex: 0,
       selectedPortalSlug: '',
       showBusinessNameInput: false,
@@ -388,6 +391,8 @@ export default {
       this.selectedFeatureFlags = this.inbox.selected_feature_flags || [];
       this.replyTime = this.inbox.reply_time;
       this.locktoSingleConversation = this.inbox.lock_to_single_conversation;
+      this.autoReplyDisabledContactPhoneNumbers =
+        this.inbox.auto_reply_disabled_contact_phone_numbers || '';
       this.selectedPortalSlug = this.inbox.help_center
         ? this.inbox.help_center.slug
         : '';
@@ -487,6 +492,8 @@ export default {
           lock_to_single_conversation: this.locktoSingleConversation,
           sender_name_type: this.senderNameType,
           business_name: this.businessName || null,
+          auto_reply_disabled_contact_phone_numbers:
+            this.autoReplyDisabledContactPhoneNumbers || '',
           channel: {
             widget_color: this.inbox.widget_color,
             website_url: this.channelWebsiteUrl,
@@ -1058,6 +1065,33 @@ export default {
                   />
                 </template>
               </SettingsToggleSection>
+
+              <SettingsFieldSection
+                v-if="isAWhatsAppChannel"
+                :label="
+                  $t(
+                    'INBOX_MGMT.SETTINGS_POPUP.AUTO_REPLY_DISABLED_CONTACT_PHONE_NUMBERS.LABEL'
+                  )
+                "
+                :help-text="
+                  $t(
+                    'INBOX_MGMT.SETTINGS_POPUP.AUTO_REPLY_DISABLED_CONTACT_PHONE_NUMBERS.HELP_TEXT'
+                  )
+                "
+                class="[&>div]:!items-start [&>div>label]:mt-2"
+              >
+                <TextArea
+                  v-model="autoReplyDisabledContactPhoneNumbers"
+                  :placeholder="
+                    $t(
+                      'INBOX_MGMT.SETTINGS_POPUP.AUTO_REPLY_DISABLED_CONTACT_PHONE_NUMBERS.PLACEHOLDER'
+                    )
+                  "
+                  auto-height
+                  min-height="6rem"
+                  max-height="12rem"
+                />
+              </SettingsFieldSection>
 
               <SettingsToggleSection
                 v-if="isAWebWidgetInbox"

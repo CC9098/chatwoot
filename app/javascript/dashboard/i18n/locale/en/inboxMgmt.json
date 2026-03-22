@@ -708,6 +708,11 @@
       "AGENT_ASSIGNMENT": "Conversation Assignment",
       "AGENT_ASSIGNMENT_SUB_TEXT": "Update conversation assignment settings",
       "UPDATE": "Update",
+      "AUTO_REPLY_DISABLED_CONTACT_PHONE_NUMBERS": {
+        "LABEL": "Skip auto replies for phone numbers",
+        "HELP_TEXT": "Add one phone number per line in international format. Matching WhatsApp contacts won't receive greeting, out-of-office, or assistant auto replies in this inbox.",
+        "PLACEHOLDER": "+85291234567\n+85261234567"
+      },
       "ENABLE_EMAIL_COLLECT_BOX": "Enable email collect box",
       "ENABLE_EMAIL_COLLECT_BOX_SUB_TEXT": "Enable or disable email collect box on new conversation",
       "AUTO_ASSIGNMENT": "Enable auto assignment",
