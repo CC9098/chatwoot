@@ -6,6 +6,10 @@ class ConversationApi extends ApiClient {
     super('conversations', { accountScoped: true });
   }
 
+  getMessages(conversationID, params = {}) {
+    return axios.get(`${this.url}/${conversationID}/messages`, { params });
+  }
+
   getLabels(conversationID) {
     return axios.get(`${this.url}/${conversationID}/labels`);
   }

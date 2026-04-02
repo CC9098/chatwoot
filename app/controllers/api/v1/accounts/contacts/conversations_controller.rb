@@ -1,6 +1,5 @@
 class Api::V1::Accounts::Contacts::ConversationsController < Api::V1::Accounts::Contacts::BaseController
   def index
-    # Start with all conversations for this contact
     conversations = Current.account.conversations.includes(
       :assignee, :contact, :inbox, :taggings
     ).where(contact_id: @contact.id)
@@ -12,6 +11,6 @@ class Api::V1::Accounts::Contacts::ConversationsController < Api::V1::Accounts::
       Current.account
     ).perform
 
-    @conversations = conversations.order(last_activity_at: :desc).limit(20)
+    @conversations = conversations.order(last_activity_at: :desc)
   end
 end
