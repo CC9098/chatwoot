@@ -1,4 +1,7 @@
 class MessageFinder
+  CURSOR_ORDER_ASC = { created_at: :asc, id: :asc }.freeze
+  CURSOR_ORDER_DESC = { created_at: :desc, id: :desc }.freeze
+
   def initialize(conversation, params)
     @conversation = conversation
     @params = params
@@ -33,18 +36,53 @@ class MessageFinder
   end
 
   def messages_after(after_id)
-    messages.reorder('created_at asc').where('id > ?', after_id).limit(100)
+    cursor = cursor_message(after_id)
+    return messages.none if cursor.blank?
+
+    apply_after_cursor(messages.reorder(CURSOR_ORDER_ASC), cursor).limit(100)
   end
 
   def messages_before(before_id)
-    messages.reorder('created_at desc').where('id < ?', before_id).limit(20).reverse
+    cursor = cursor_message(before_id)
+    return messages.none if cursor.blank?
+
+    apply_before_cursor(messages.reorder(CURSOR_ORDER_DESC), cursor).limit(20).reverse
   end
 
   def messages_between(after_id, before_id)
-    messages.reorder('created_at asc').where('id >= ? AND id < ?', after_id, before_id).limit(1000)
+    after_cursor = cursor_message(after_id)
+    before_cursor = cursor_message(before_id)
+    return messages.none if after_cursor.blank? || before_cursor.blank?
+
+    messages.reorder(CURSOR_ORDER_ASC)
+            .yield_self { |scope| apply_after_cursor(scope, after_cursor, inclusive: true) }
+            .yield_self { |scope| apply_before_cursor(scope, before_cursor) }
+            .limit(1000)
   end
 
   def messages_latest
-    messages.reorder('created_at desc').limit(20).reverse
+    messages.reorder(CURSOR_ORDER_DESC).limit(20).reverse
+  end
+
+  def cursor_message(message_id)
+    messages.find_by(id: message_id)
+  end
+
+  def apply_after_cursor(scope, cursor, inclusive: false)
+    operator = inclusive ? '>=' : '>'
+
+    scope.where(
+      "messages.created_at > :created_at OR (messages.created_at = :created_at AND messages.id #{operator} :id)",
+      created_at: cursor.created_at,
+      id: cursor.id
+    )
+  end
+
+  def apply_before_cursor(scope, cursor)
+    scope.where(
+      'messages.created_at < :created_at OR (messages.created_at = :created_at AND messages.id < :id)',
+      created_at: cursor.created_at,
+      id: cursor.id
+    )
   end
 end

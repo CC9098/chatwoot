@@ -73,5 +73,85 @@ describe MessageFinder do
         expect(result.last.id).to be conversation.messages[-2].id
       end
     end
+
+    context 'when message timestamps do not match id order' do
+      let(:newest_message) { @newest_message }
+      let(:reference_message) { @reference_message }
+      let(:older_message) { @older_message }
+      let(:oldest_message) { @oldest_message }
+
+      before do
+        conversation.messages.delete_all
+
+        @newest_message = create(
+          :message,
+          account: account,
+          inbox: inbox,
+          conversation: conversation,
+          content: 'newest'
+        )
+        @reference_message = create(
+          :message,
+          account: account,
+          inbox: inbox,
+          conversation: conversation,
+          content: 'reference'
+        )
+        @older_message = create(
+          :message,
+          account: account,
+          inbox: inbox,
+          conversation: conversation,
+          content: 'older'
+        )
+        @oldest_message = create(
+          :message,
+          account: account,
+          inbox: inbox,
+          conversation: conversation,
+          content: 'oldest'
+        )
+
+        newest_message.update_columns(created_at: 1.hour.ago, updated_at: 1.hour.ago)
+        reference_message.update_columns(created_at: 2.hours.ago, updated_at: 2.hours.ago)
+        older_message.update_columns(created_at: 3.hours.ago, updated_at: 3.hours.ago)
+        oldest_message.update_columns(created_at: 4.hours.ago, updated_at: 4.hours.ago)
+      end
+
+      context 'with before attribute' do
+        let(:params) { { before: reference_message.id } }
+
+        it 'paginates based on the message cursor timestamp' do
+          result = message_finder.perform
+
+          expect(result.map(&:id)).to eq([oldest_message.id, older_message.id])
+        end
+      end
+
+      context 'with after attribute' do
+        let(:params) { { after: reference_message.id } }
+
+        it 'returns messages newer than the cursor even when they have lower ids' do
+          result = message_finder.perform
+
+          expect(result.map(&:id)).to eq([newest_message.id])
+        end
+      end
+
+      context 'with after and before attribute' do
+        let(:params) do
+          {
+            after: oldest_message.id,
+            before: newest_message.id
+          }
+        end
+
+        it 'returns messages between the cursor timestamps in chronological order' do
+          result = message_finder.perform
+
+          expect(result.map(&:id)).to eq([oldest_message.id, older_message.id, reference_message.id])
+        end
+      end
+    end
   end
 end
